@@ -1,0 +1,16 @@
+{
+  "intents": [
+    {
+      "intent": "ScoopsForCupsIntent",
+      "slots": [
+        {
+          "name": "Cups",
+          "type": "AMAZON.NUMBER"
+        }
+      ]
+    },
+    {
+      "intent": "AMAZON.HelpIntent"
+    }
+  ]
+}

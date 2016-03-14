@@ -1,0 +1,3 @@
+ScoopsForCupsIntent How many scoops for {Cups} cups
+ScoopsForCupsIntent {Cups} cups
+ScoopsForCupsIntent How much coffee for {Cups} cups of water
