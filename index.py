@@ -61,12 +61,10 @@ def get_welcome_response():
         # If we wanted to initialize the session to have some
         #   attributes we could add those here.
         session_attributes={},
-        speechlet_response=build_speechlet_response(
-            card_title=None,
-            output="How many cups of coffee are you making?",
-            reprompt_text=None,
-            should_end_session=False,
-        ),
+        card_title=None,
+        output="How many cups of coffee are you making?",
+        reprompt_text=None,
+        should_end_session=False,
     )
 
 
@@ -75,12 +73,10 @@ def get_scoops_for_cups(intent, session):
     def bad_response():
         return build_response(
             session_attributes={},
-            speechlet_response=build_speechlet_response(
-                card_title=None,
-                output="I'm not sure how many cups you're making.",
-                reprompt_text="How many cups of coffee are you making?",
-                should_end_session=False,
-            ),
+            card_title=None,
+            output="I'm not sure how many cups you're making.",
+            reprompt_text="How many cups of coffee are you making?",
+            should_end_session=False,
         )
 
     try:
@@ -89,54 +85,71 @@ def get_scoops_for_cups(intent, session):
         return bad_response()
     return build_response(
         session_attributes={},
-        speechlet_response=build_speechlet_response(
-            card_title='Coffee scoops',
-            output=(
-                'Use {num_scoops:.2g} scoops for {num_cups} cups.'
-            ).format(
-                num_scoops=num_cups * SCOOPS_PER_CUP,
-                num_cups=num_cups,
-            ),
-            # Setting reprompt_text to None signifies that we do not
-            #   want to reprompt the user. If the user does not respond
-            #   or says something that is not understood, the session
-            #   will end.
-            reprompt_text=None,
-            should_end_session=True,
+        card_title='Coffee scoops',
+        output=(
+            'Use {num_scoops:.2g} scoops for {num_cups} cups.'
+        ).format(
+            num_scoops=num_cups * SCOOPS_PER_CUP,
+            num_cups=num_cups,
         ),
+        # Setting reprompt_text to None signifies that we do not want
+        #   to reprompt the user. If the user does not respond or says
+        #   something that is not understood, the session will end.
+        reprompt_text=None,
+        should_end_session=True,
     )
 
 
-def build_response(session_attributes, speechlet_response):
+def build_response(
+        session_attributes, card_title, output, reprompt_text,
+        should_end_session):
     """Helper to build the response sent back to Alexa."""
     return {
         'version': '1.0',
         'sessionAttributes': session_attributes,
-        'response': speechlet_response
+        'response': {
+            'card': build_card(title=card_title, content=output),
+            'outputSpeech': build_output_speech(text=output),
+            'reprompt': build_reprompt(text=reprompt_text),
+            'shouldEndSession': should_end_session,
+        },
     }
 
 
-def build_speechlet_response(
-        card_title, output, reprompt_text, should_end_session):
-    """Helper to format the speech and card data."""
-    response = {
-        'outputSpeech': {
-            'type': 'PlainText',
-            'text': output,
-        },
-        'card': None,
-        'reprompt': {
-            'outputSpeech': {
-                'type': 'PlainText',
-                'text': reprompt_text,
-            },
-        },
-        'shouldEndSession': should_end_session,
+def build_card(title, content):
+    """The object containing a card to render to the Amazon Alexa App."""
+    if not title:
+        # XXX: Using this as a hacky way of indicating we don't want a
+        #   card at all. This is hacky because it's valid to create a
+        #   card without a title.
+        return None
+    return {
+        'type': 'Simple',
+        'title': title,
+        'content': content,
     }
-    if card_title:
-        response['card'] = {
-            'type': 'Simple',
-            'title': card_title,
-            'content': output,
-        }
-    return response
+
+
+def build_output_speech(text):
+    """Used for setting both the outputSpeech and the reprompt properties."""
+    return {
+        'type': 'PlainText',
+        'text': text,
+    }
+
+
+def build_reprompt(text):
+    """The object to use if a re-prompt is necessary.
+
+    This is used if the your service keeps the session open after
+    sending the response, but the user does not respond with anything
+    that maps to an intent defined in your voice interface while the
+    audio stream is open.
+
+    If this is not set, the user is not re-prompted.
+    """
+    if not text:
+        return None
+    return {
+        'outputSpeech': build_output_speech(text=text),
+    }
